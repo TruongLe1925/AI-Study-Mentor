@@ -10,4 +10,5 @@ import retrofit2.http.POST;
 public interface QuestionAPI {
     @POST("api/question/ask")
     Call<AnswerDTO> askQuestion(@Body AskDTO question);
+    
 }
