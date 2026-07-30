@@ -293,27 +293,6 @@
                         android:layout_height="wrap_content"
                         android:checked="true"
                         android:text="All" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipMath"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Math" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipScience"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Science" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipProgramming"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Programming" />
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
 

@@ -1,6 +1,7 @@
 package com._anhtai.aistudymentor.service;
 
 import com._anhtai.aistudymentor.dto.reponse.AnswerDTO;
+import com._anhtai.aistudymentor.dto.request.AskDTO;
 import com._anhtai.aistudymentor.dto.request.QuizDTO;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.content.Media;
@@ -13,11 +14,12 @@ public class ChatService {
     public ChatService(ChatClient.Builder chatClient) {
         this.chatClient = chatClient.build();
     }
-    public AnswerDTO chat(String message) {
-        if(message==null){
+    public AnswerDTO chat(AskDTO askDTO) {
+        if(askDTO==null){
             throw new RuntimeException("Messege not found");
         }
-        String userText = String.format("\"Câu hỏi / Chủ đề cần giải đáp: %s\"", message);
+        String userText = String.format("\"Câu hỏi / Chủ đề cần giải đáp: %s \"" +
+                "về môn học: %s\"", askDTO.getQuestion(), askDTO.getSubject());
         String systemMessage = """
             Bạn là "AI Study Mentor" - trợ lý học tập AI thông minh, thân thiện dành cho học sinh, sinh viên (từ cấp 2, cấp 3 đến đại học).
             

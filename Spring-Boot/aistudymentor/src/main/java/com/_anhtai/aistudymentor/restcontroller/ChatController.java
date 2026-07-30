@@ -16,8 +16,7 @@ public class ChatController {
     }
     @PostMapping("/ask")
     public AnswerDTO chat(@RequestBody AskDTO questionDTO) {
-
-        return chatService.chat(questionDTO.getQuestion());
+        return chatService.chat(questionDTO);
     }
     @PostMapping("/quiz")
     public QuizDTO quizGen(@RequestBody SubjectDTO subject) {
