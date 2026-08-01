@@ -24,16 +24,13 @@ public class MathView extends WebView {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         setBackgroundColor(0); // Transparent
-        setLayerType(WebView.LAYER_TYPE_SOFTWARE, null); // Better rendering for math symbols
+        // Removed setLayerType(WebView.LAYER_TYPE_SOFTWARE, null) - Hardware acceleration is better for API 30+
     }
 
     public void setText(String text) {
         this.text = text;
         if (text == null) return;
 
-        // Escape some characters for JS if needed, but KaTeX handles most.
-        // We use double backslashes for LaTeX commands in Java strings.
-        
         String html = "<html><head>" +
                 "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>" +
                 "<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css'>" +

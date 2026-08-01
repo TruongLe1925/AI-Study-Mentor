@@ -69,17 +69,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        
+        // 1. Core Window Configuration
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        retrofitService = new RetrofitService(this);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
-        // Register Image Picker
+        // 2. Immediate Lifecycle Registration (Must be in onCreate)
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -89,11 +84,29 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
-        // Initialize UI components and listeners
-        initViews();
-        setupViewModel();
-        setupListeners();
-        loadSubjects();
+        // 3. Deferred UI & Logic Initialization
+        // We use view.post to ensure the first frame is drawn (white background/splash) 
+        // before we start blocking the UI thread with heavy view finding or ViewModel setup.
+        View mainView = findViewById(R.id.main);
+        if (mainView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
+
+            mainView.post(() -> {
+                try {
+                    retrofitService = new RetrofitService(this);
+                    initViews();
+                    setupViewModel();
+                    setupListeners();
+                    loadSubjects();
+                } catch (Exception e) {
+                    Log.e("BOOT_ERROR", "Error during deferred initialization", e);
+                }
+            });
+        }
     }
 
     private void setupViewModel() {
@@ -161,8 +174,7 @@ public class MainActivity extends AppCompatActivity {
 
         tvViewAll.setOnClickListener(v -> {
             if (isLoggedIn()) {
-                // Navigate to Recent Questions
-                Toast.makeText(this, "Opening Recent Questions...", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, AllQuestionsActivity.class));
             } else {
                 redirectToLogin();
             }
@@ -291,11 +303,67 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addSubjectChips(List<SubjectDTO> subjects) {
-        for (SubjectDTO subject : subjects) {
+        if (subjects == null) return;
+        chipGroupSubjects.removeAllViews();
+
+        // 1. Create a modifiable copy to sort
+        List<SubjectDTO> modifiableSubjects = new java.util.ArrayList<>(subjects);
+
+        // 2. Find "All" and move to the beginning
+        SubjectDTO allSubject = null;
+        for (SubjectDTO s : modifiableSubjects) {
+            if ("All".equalsIgnoreCase(s.getName())) {
+                allSubject = s;
+                break;
+            }
+        }
+
+        if (allSubject != null) {
+            modifiableSubjects.remove(allSubject);
+            modifiableSubjects.add(0, allSubject);
+        }
+
+        // 3. Dynamically create chips with styling and selection logic
+        for (SubjectDTO subject : modifiableSubjects) {
+            if (subject.getName() == null) continue;
+
             Chip chip = new Chip(this);
+            chip.setId(View.generateViewId()); // Generate unique ID for getCheckedChipId()
             chip.setText(subject.getName());
             chip.setCheckable(true);
             chip.setClickable(true);
+
+            // Define Colors for states (Checked vs Unchecked)
+            int[][] states = new int[][]{
+                    new int[]{android.R.attr.state_checked}, // checked
+                    new int[]{-android.R.attr.state_checked}  // unchecked
+            };
+
+            int[] backgroundColors = new int[]{
+                    android.graphics.Color.parseColor("#0256C2"), // Blue when selected
+                    android.graphics.Color.WHITE                  // White when unselected
+            };
+
+            int[] textColors = new int[]{
+                    android.graphics.Color.WHITE,                 // White text when selected
+                    android.graphics.Color.parseColor("#1E293B")  // Dark text when unselected
+            };
+
+            int[] strokeColors = new int[]{
+                    android.graphics.Color.parseColor("#0256C2"), // Blue border when selected
+                    android.graphics.Color.parseColor("#E2E8F0")  // Grey border when unselected
+            };
+
+            chip.setChipBackgroundColor(new android.content.res.ColorStateList(states, backgroundColors));
+            chip.setTextColor(new android.content.res.ColorStateList(states, textColors));
+            chip.setChipStrokeColor(new android.content.res.ColorStateList(states, strokeColors));
+            chip.setChipStrokeWidth(3f);
+
+            // 4. Auto-select "All"
+            if ("All".equalsIgnoreCase(subject.getName())) {
+                chip.setChecked(true);
+            }
+
             chipGroupSubjects.addView(chip);
         }
     }

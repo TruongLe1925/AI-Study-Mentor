@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="12dp"
     app:cardBackgroundColor="#FFFFFF"
-    app:cardCornerRadius="12dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
     app:strokeColor="#E2E8F0"
     app:strokeWidth="1dp">
@@ -16,23 +16,90 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Question Section -->
         <TextView
-            android:id="@+id/tvQuestionTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="QUESTION"
+            android:textColor="#64748B"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvQuestionText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Question Placeholder"
+            android:layout_marginTop="4dp"
             android:textColor="#1E293B"
             android:textSize="15sp"
             android:textStyle="bold" />
 
+        <!-- Subject Badge -->
         <TextView
-            android:id="@+id/tvQuestionSnippet"
+            android:id="@+id/tvSubjectBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_level_badge"
+            android:backgroundTint="#F1F5F9"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:text="Math"
+            android:textColor="#475569"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="12dp"
+            android:background="#F1F5F9" />
+
+        <!-- Answer Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AI ANSWER"
+            android:textColor="#0256C2"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvPrimaryAnswer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="This is a placeholder for the recent question content."
+            android:textColor="#1E293B"
+            android:textSize="14sp" />
+
+        <!-- Explanation Section -->
+        <TextView
+            android:id="@+id/tvLabelExplain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="EXPLANATION"
             android:textColor="#64748B"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvSimplifiedExplanation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#475569"
             android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvAskedAt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="end"
+            android:text="Asked at: 2026-08-01"
+            android:textColor="#94A3B8"
+            android:textSize="10sp" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

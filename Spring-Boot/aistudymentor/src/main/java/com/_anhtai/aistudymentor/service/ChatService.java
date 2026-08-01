@@ -1,25 +1,44 @@
 package com._anhtai.aistudymentor.service;
 
+import com._anhtai.aistudymentor.dao.UserDAO;
 import com._anhtai.aistudymentor.dto.reponse.AnswerDTO;
+import com._anhtai.aistudymentor.dto.reponse.QuestionHistory;
+import com._anhtai.aistudymentor.dto.reponse.SubjectDTO;
 import com._anhtai.aistudymentor.dto.request.AskDTO;
+import com._anhtai.aistudymentor.dto.request.QuestionDTO;
 import com._anhtai.aistudymentor.dto.request.QuizDTO;
+import com._anhtai.aistudymentor.entity.AIAnswer;
+import com._anhtai.aistudymentor.entity.Question;
+import com._anhtai.aistudymentor.entity.Subject;
 import com._anhtai.aistudymentor.entity.User;
+import com._anhtai.aistudymentor.repositoy.QuestionRepository;
+import com._anhtai.aistudymentor.repositoy.SubjectRepository;
 import com._anhtai.aistudymentor.repositoy.UserDetailsRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.content.Media;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Service
 public class ChatService {
     private final ChatClient chatClient;
     private final UserDetailsRepository userDetailsRepository;
-    public ChatService(ChatClient.Builder chatClient,UserDetailsRepository userDetailsRepository) {
+    private final UserDAO userDAO;
+    private final QuestionRepository questionRepository;
+    private final SubjectRepository subjectRepository;
+    public ChatService(SubjectRepository subjectRepository, QuestionRepository questionRepository, UserDAO userDAO, ChatClient.Builder chatClient, UserDetailsRepository userDetailsRepository) {
         this.chatClient = chatClient.build();
         this.userDetailsRepository = userDetailsRepository;
+        this.userDAO = userDAO;
+        this.questionRepository = questionRepository;
+        this.subjectRepository = subjectRepository;
     }
-    public AnswerDTO chat(AskDTO askDTO, MultipartFile file) {
+    @Transactional
+    public AnswerDTO chat(AskDTO askDTO, MultipartFile file,String email) {
         if(askDTO==null){
             throw new RuntimeException("Messege not found");
         }
@@ -37,8 +56,7 @@ public class ChatService {
             6. Kiến thức không liên quan thì cứ trả lời là không hỗ trợ và không đưa ra các thông tin không liên quan.
             Luôn giữ văn phong khuyến khích, tích cực, mang tính giáo dục cao. Tuyệt đối không trả lời các nội dung không liên quan đến học tập hoặc vi phạm chuẩn mực.
             """;
-
-        if (file != null && !file.isEmpty()) {
+        if (email != null && file != null && !file.isEmpty()) {
             // 1. Lấy contentType từ file gửi lên
             String contentType = file.getContentType();
 
@@ -53,18 +71,59 @@ public class ChatService {
                     .mimeType(MimeTypeUtils.parseMimeType(contentType))
                     .data(file.getResource())
                     .build();
-
-            return chatClient.prompt()
+            User user = userDAO.findByEmail(email);
+            Subject subject = subjectRepository.findBySubjectName(askDTO.getSubject());
+            System.out.println(subject.getSubjectName());
+            Question question = Question.builder()
+                    .questionText(askDTO.getQuestion())
+                    .askedAt(java.time.LocalDateTime.now())
+                    .subject(subject)
+                    .build();
+            com._anhtai.aistudymentor.dto.reponse.AnswerDTO answerDTO = chatClient.prompt()
                     .user(promptUserSpec -> promptUserSpec.text(userText).media(media))
                     .system(systemMessage)
                     .call()
                     .entity(AnswerDTO.class);
-        }
+            AIAnswer aiAnswer = AIAnswer.builder()
+                    .primaryAnswer(answerDTO.getMainAnswer())
+                    .simplifiedExplanation(answerDTO.getAdditionalInfo())
+                    .build();
+            question.setAiAnswer(aiAnswer);
+            aiAnswer.setQuestion(question);
+            question.setUser(user);
+            questionRepository.save(question);
+            return answerDTO;
+        }else if(email != null && (file == null || file.isEmpty())){
+
+            User user = userDAO.findByEmail(email);
+            Subject subject = subjectRepository.findBySubjectName(askDTO.getSubject());
+            System.out.println(subject.getSubjectName());
+            Question question = Question.builder()
+                    .questionText(askDTO.getQuestion())
+                    .subject(subject)
+                    .askedAt(java.time.LocalDateTime.now())
+                    .build();
+            com._anhtai.aistudymentor.dto.reponse.AnswerDTO answerDTO = chatClient.prompt()
+                    .user(promptUserSpec -> promptUserSpec.text(userText))
+                    .system(systemMessage)
+                    .call()
+                    .entity(AnswerDTO.class);
+            AIAnswer aiAnswer = AIAnswer.builder()
+                    .primaryAnswer(answerDTO.getMainAnswer())
+                    .simplifiedExplanation(answerDTO.getAdditionalInfo())
+                    .build();
+            question.setAiAnswer(aiAnswer);
+            aiAnswer.setQuestion(question);
+            question.setUser(user);
+            questionRepository.save(question);
+            return answerDTO;
+        }else {
             return chatClient.prompt()
                     .user(promptUserSpec -> promptUserSpec.text(userText))
                     .system(systemMessage)
                     .call()
                     .entity(AnswerDTO.class);
+        }
     }
     public QuizDTO quizGen(String subject,String email){
         if(subject == null){
@@ -105,5 +164,18 @@ public class ChatService {
                 .user(userText)
                 .call()
                 .entity(QuizDTO.class);
+    }
+    public List<QuestionHistory> getQuestions(String email){
+        List<Question> question = questionRepository.findAllByUserEmail(email);
+        return question.stream().map(q -> {
+            QuestionHistory questionHistory = new QuestionHistory();
+            questionHistory.setQuestionText(q.getQuestionText());
+            questionHistory.setAskedAt(q.getAskedAt());
+            questionHistory.setSubject(q.getSubject().getSubjectName());
+            AIAnswer aiAnswer = q.getAiAnswer();
+            questionHistory.setPrimaryAnswer(aiAnswer.getPrimaryAnswer());
+            questionHistory.setSimplifiedExplanation(aiAnswer.getSimplifiedExplanation());
+            return questionHistory;
+        }).toList();
     }
 }

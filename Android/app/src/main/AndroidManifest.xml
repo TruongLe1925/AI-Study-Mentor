@@ -13,40 +13,55 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Aistudymentor"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:hardwareAccelerated="true">
+
+        <!-- Unified History Activity -->
+        <activity
+            android:name=".ui.AllQuestionsActivity"
+            android:exported="false"
+            android:hardwareAccelerated="true" />
+
         <activity
             android:name=".ui.QuizResultActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:hardwareAccelerated="true" />
+
         <activity
             android:name=".ui.PracticeActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:hardwareAccelerated="true" />
+
         <activity
             android:name=".ui.QuizActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.RecentQuestionActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:hardwareAccelerated="true" />
+
         <activity
             android:name=".ui.ProfileActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:hardwareAccelerated="true" />
+
         <activity
             android:name=".ui.SignUpActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:hardwareAccelerated="true" />
+
         <activity
             android:name=".ui.LoginActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.ItemRecentQuestion"
-            android:exported="false" />
+            android:exported="false"
+            android:hardwareAccelerated="true" />
+
         <activity
             android:name=".ui.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:hardwareAccelerated="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

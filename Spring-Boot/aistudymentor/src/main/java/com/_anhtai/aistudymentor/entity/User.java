@@ -56,6 +56,9 @@ public class User implements UserDetails {
     @JoinColumn(name = "SelectedThemeID", foreignKey = @ForeignKey(name = "FK_Users_Themes"))
     private Theme selectedTheme;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Question> questions;
+
     @Column(name = "CreatedAt", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

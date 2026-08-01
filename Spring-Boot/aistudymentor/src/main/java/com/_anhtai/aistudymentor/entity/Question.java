@@ -2,6 +2,7 @@ package com._anhtai.aistudymentor.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Question {
     
     @Id
@@ -24,9 +26,12 @@ public class Question {
     private User user;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "SubjectID", nullable = false, foreignKey = @ForeignKey(name = "FK_Questions_Subjects"))
+    @JoinColumn(name = "SubjectID", nullable = true, foreignKey = @ForeignKey(name = "FK_Questions_Subjects"))
     private Subject subject;
-    
+
+    @OneToOne(mappedBy = "question", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private AIAnswer aiAnswer;
+
     @Column(name = "QuestionText", nullable = false, columnDefinition = "LONGTEXT")
     private String questionText;
     

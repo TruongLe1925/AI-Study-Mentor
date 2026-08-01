@@ -315,14 +315,6 @@
                     android:layout_height="wrap_content"
                     app:singleLine="true"
                     app:singleSelection="true">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAll"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="All" />
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
 

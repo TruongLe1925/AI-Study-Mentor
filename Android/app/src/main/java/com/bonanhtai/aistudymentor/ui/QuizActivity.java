@@ -1,9 +1,11 @@
 package com.bonanhtai.aistudymentor.ui;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.RadioGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -12,28 +14,30 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bonanhtai.aistudymentor.R;
 import com.bonanhtai.aistudymentor.model.QuestionDTO;
 import com.bonanhtai.aistudymentor.model.QuizDTO;
+import com.bonanhtai.aistudymentor.ui.view.MathView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.gson.Gson;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import com.bonanhtai.aistudymentor.ui.view.MathView;
 
 public class QuizActivity extends AppCompatActivity {
 
     private LinearProgressIndicator progressIndicator;
     private TextView tvQuestionNumber;
     private MathView mathQuestion;
-    private RadioGroup rgOptions;
-    private MaterialRadioButton rbA, rbB, rbC, rbD;
+    private LinearLayout layoutOptions;
     private MaterialButton btnNext, btnPrevious;
     private android.widget.ImageButton btnBackToPractice, btnGoHome;
 
     private List<QuestionDTO> questions;
     private String[] userAnswers;
     private int currentIndex = 0;
+    
+    private final List<MaterialCardView> optionCards = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,11 +59,7 @@ public class QuizActivity extends AppCompatActivity {
         progressIndicator = findViewById(R.id.quizProgress);
         tvQuestionNumber = findViewById(R.id.tvQuestionNumber);
         mathQuestion = findViewById(R.id.mathQuestion);
-        rgOptions = findViewById(R.id.rgOptions);
-        rbA = findViewById(R.id.rbOptionA);
-        rbB = findViewById(R.id.rbOptionB);
-        rbC = findViewById(R.id.rbOptionC);
-        rbD = findViewById(R.id.rbOptionD);
+        layoutOptions = findViewById(R.id.layoutOptions);
         btnNext = findViewById(R.id.btnNext);
         btnPrevious = findViewById(R.id.btnPrevious);
         btnBackToPractice = findViewById(R.id.btnBackToPractice);
@@ -84,32 +84,58 @@ public class QuizActivity extends AppCompatActivity {
         progressIndicator.setProgress((int) (((float) (currentIndex + 1) / questions.size()) * 100));
         tvQuestionNumber.setText("Question " + (currentIndex + 1) + "/" + questions.size());
         
-        // Wrap with MathView requirements (e.g. if string doesn't contain $ or \( \))
-        String questionText = q.getQuestion();
-        mathQuestion.setText(questionText);
+        mathQuestion.setText(q.getQuestion());
         
-        List<String> opts = q.getOptions();
-        rbA.setText(opts.size() > 0 ? opts.get(0) : "");
-        rbB.setText(opts.size() > 1 ? opts.get(1) : "");
-        rbC.setText(opts.size() > 2 ? opts.get(2) : "");
-        rbD.setText(opts.size() > 3 ? opts.get(3) : "");
-
-        // Restore previous answer if any
-        rgOptions.clearCheck();
-        String savedAnswer = userAnswers[currentIndex];
-        if (savedAnswer != null) {
-            if (savedAnswer.equals(rbA.getText().toString())) rbA.setChecked(true);
-            else if (savedAnswer.equals(rbB.getText().toString())) rbB.setChecked(true);
-            else if (savedAnswer.equals(rbC.getText().toString())) rbC.setChecked(true);
-            else if (savedAnswer.equals(rbD.getText().toString())) rbD.setChecked(true);
-        }
+        setupOptions(q.getOptions());
 
         btnPrevious.setVisibility(currentIndex == 0 ? View.INVISIBLE : View.VISIBLE);
         btnNext.setText(currentIndex == questions.size() - 1 ? "Finish" : "Next Question");
     }
 
+    private void setupOptions(List<String> options) {
+        layoutOptions.removeAllViews();
+        optionCards.clear();
+        LayoutInflater inflater = LayoutInflater.from(this);
+
+        for (int i = 0; i < options.size(); i++) {
+            String optionText = options.get(i);
+            View optionView = inflater.inflate(R.layout.item_quiz_option, layoutOptions, false);
+            
+            MaterialCardView card = optionView.findViewById(R.id.cardOption);
+            MaterialRadioButton rb = optionView.findViewById(R.id.rbIndicator);
+            MathView mathOption = optionView.findViewById(R.id.mathOptionText);
+            
+            mathOption.setText(optionText);
+            optionCards.add(card);
+
+            // Restore selection
+            if (userAnswers[currentIndex] != null && userAnswers[currentIndex].equals(optionText)) {
+                rb.setChecked(true);
+                card.setStrokeColor(Color.parseColor("#0256C2")); // Theme color
+            } else {
+                card.setStrokeColor(Color.parseColor("#E2E8F0")); // Default color
+            }
+
+            card.setOnClickListener(v -> {
+                // Clear all selections visually
+                for (int j = 0; j < layoutOptions.getChildCount(); j++) {
+                    View vChild = layoutOptions.getChildAt(j);
+                    MaterialCardView c = vChild.findViewById(R.id.cardOption);
+                    MaterialRadioButton r = vChild.findViewById(R.id.rbIndicator);
+                    c.setStrokeColor(Color.parseColor("#E2E8F0"));
+                    r.setChecked(false);
+                }
+                // Select this one
+                rb.setChecked(true);
+                userAnswers[currentIndex] = optionText;
+                card.setStrokeColor(Color.parseColor("#0256C2"));
+            });
+
+            layoutOptions.addView(optionView);
+        }
+    }
+
     private void handlePrevious() {
-        saveCurrentAnswer();
         if (currentIndex > 0) {
             currentIndex--;
             displayQuestion();
@@ -117,7 +143,7 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void handleNext() {
-        if (saveCurrentAnswer()) {
+        if (userAnswers[currentIndex] != null) {
             if (currentIndex < questions.size() - 1) {
                 currentIndex++;
                 displayQuestion();
@@ -127,16 +153,6 @@ public class QuizActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Please select an answer", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private boolean saveCurrentAnswer() {
-        int selectedId = rgOptions.getCheckedRadioButtonId();
-        if (selectedId != -1) {
-            MaterialRadioButton selectedRb = findViewById(selectedId);
-            userAnswers[currentIndex] = selectedRb.getText().toString();
-            return true;
-        }
-        return false;
     }
 
     private void showResult() {

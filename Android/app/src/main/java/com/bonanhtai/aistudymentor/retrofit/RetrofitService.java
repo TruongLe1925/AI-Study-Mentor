@@ -4,7 +4,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Interceptor;
@@ -21,6 +25,12 @@ public class RetrofitService {
     }
 
     public void initializeRetrofit(Context context) {
+        // Create custom Gson for LocalDateTime support
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, typeOfT, context1) -> 
+                        LocalDateTime.parse(json.getAsString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .create();
+
         // Create Interceptor to add JWT Token to headers
         Interceptor authInterceptor = chain -> {
             Request original = chain.request();
@@ -51,7 +61,7 @@ public class RetrofitService {
         retrofit = new Retrofit.Builder()
                 .baseUrl("http://10.0.2.2:8080/")
                 .client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create(new Gson()))
+                .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
     }
     public Retrofit getRetrofit() {

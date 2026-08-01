@@ -10,6 +10,8 @@ import com.bonanhtai.aistudymentor.api.RegisterAPI;
 import com.bonanhtai.aistudymentor.model.AnswerDTO;
 import com.bonanhtai.aistudymentor.model.AskDTO;
 import com.bonanhtai.aistudymentor.model.AuthRequest;
+import com.bonanhtai.aistudymentor.model.QuestionDTO;
+import com.bonanhtai.aistudymentor.model.QuestionHistory;
 import com.bonanhtai.aistudymentor.model.QuizDTO;
 import com.bonanhtai.aistudymentor.model.QuizRequestDTO;
 import com.bonanhtai.aistudymentor.model.Token;
@@ -20,6 +22,7 @@ import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -156,5 +159,23 @@ public class CallAPI {
                     }
                 });
     }
+    public void getQuestionsAPI(ApiCallback<List<QuestionHistory>> callback) {
+        QuestionAPI questionAPI = retrofitService.getRetrofit().create(QuestionAPI.class);
+        questionAPI.getQuestions()
+                .enqueue(new Callback<List<QuestionHistory>>() {
+                    @Override
+                    public void onResponse(Call<List<QuestionHistory>> call, Response<List<QuestionHistory>> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            callback.onSuccess(response.body());
+                        } else {
+                            callback.onError(new Throwable("Failed to fetch questions"));
+                        }
+                    }
 
-}
+                    @Override
+                    public void onFailure(Call<List<QuestionHistory>> call, Throwable throwable) {
+                        callback.onError(throwable);
+                    }
+                });
+    }
+    }
