@@ -4,6 +4,7 @@ import com._anhtai.aistudymentor.filter.JwtAuthFilter;
 import com._anhtai.aistudymentor.repositoy.UserDetailsRepository;
 import com._anhtai.aistudymentor.service.CustomUserDetailsService;
 import com._anhtai.aistudymentor.utils.JWTUtils;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

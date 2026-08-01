@@ -2,6 +2,7 @@ package com._anhtai.aistudymentor.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -17,6 +18,7 @@ import java.util.List;
 @Table(name = "tbl_users")
 @Data
 @NoArgsConstructor
+@Builder
 @AllArgsConstructor
 public class User implements UserDetails {
 

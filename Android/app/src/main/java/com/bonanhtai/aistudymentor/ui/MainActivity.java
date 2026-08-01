@@ -2,46 +2,54 @@ package com.bonanhtai.aistudymentor.ui;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bonanhtai.aistudymentor.R;
-import com.bonanhtai.aistudymentor.api.ApiCallback;
-import com.bonanhtai.aistudymentor.api.QuestionAPI;
 import com.bonanhtai.aistudymentor.api.SubjectAPI;
 import com.bonanhtai.aistudymentor.model.AnswerDTO;
 import com.bonanhtai.aistudymentor.model.AskDTO;
 import com.bonanhtai.aistudymentor.model.SubjectDTO;
 import com.bonanhtai.aistudymentor.retrofit.RetrofitService;
+import com.bonanhtai.aistudymentor.viewmodel.ChatViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity {
 
     private EditText etQuestionInput;
     private MaterialButton btnSend;
+    private ImageButton btnUploadImage;
     private MaterialCardView cardAnswer;
     private TextView tvAnswerContent;
     private TextView tvAdditionalInfo;
@@ -50,7 +58,13 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout avatarContainer;
     private TextView tvViewAll;
     private BottomNavigationView bottomNavigation;
-    private RetrofitService retrofitService = new RetrofitService();
+    private FrameLayout layoutImagePreview;
+    private com.google.android.material.imageview.ShapeableImageView ivSelectedImagePreview;
+    private ImageButton btnRemoveImage;
+    private RetrofitService retrofitService;
+    private ChatViewModel chatViewModel;
+
+    private ActivityResultLauncher<String> imagePickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,21 +72,64 @@ public class MainActivity extends AppCompatActivity {
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        retrofitService = new RetrofitService(this);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
+        // Register Image Picker
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        handleImageSelection(uri);
+                    }
+                }
+        );
+
         // Initialize UI components and listeners
         initViews();
+        setupViewModel();
         setupListeners();
         loadSubjects();
+    }
+
+    private void setupViewModel() {
+        chatViewModel = new ViewModelProvider(this).get(ChatViewModel.class);
+
+        // Observe AI Answer
+        chatViewModel.getAnswer().observe(this, this::displayAnswer);
+
+        // Observe Loading State
+        chatViewModel.isLoading().observe(this, isLoading -> {
+            btnSend.setEnabled(!isLoading);
+            if (isLoading) {
+                Toast.makeText(this, "AI is thinking...", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Observe Errors
+        chatViewModel.getError().observe(this, error -> {
+            Toast.makeText(this, "Error: " + error, Toast.LENGTH_LONG).show();
+        });
+
+        // Observe Selected Image
+        chatViewModel.getSelectedImage().observe(this, file -> {
+            if (file != null) {
+                ivSelectedImagePreview.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
+                layoutImagePreview.setVisibility(View.VISIBLE);
+            } else {
+                layoutImagePreview.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void initViews() {
         etQuestionInput = findViewById(R.id.etQuestionInput);
         btnSend = findViewById(R.id.btnSend);
+        btnUploadImage = findViewById(R.id.btnUploadImage);
         cardAnswer = findViewById(R.id.cardAnswer);
         tvAnswerContent = findViewById(R.id.tvAnswerContent);
         tvAdditionalInfo = findViewById(R.id.tvAdditionalInfo);
@@ -81,10 +138,17 @@ public class MainActivity extends AppCompatActivity {
         avatarContainer = findViewById(R.id.avatarContainer);
         tvViewAll = findViewById(R.id.tvViewAll);
         bottomNavigation = findViewById(R.id.bottomNavigation);
+        layoutImagePreview = findViewById(R.id.layoutImagePreview);
+        ivSelectedImagePreview = findViewById(R.id.ivSelectedImagePreview);
+        btnRemoveImage = findViewById(R.id.btnRemoveImage);
     }
 
     private void setupListeners() {
         btnSend.setOnClickListener(v -> handleSendAction());
+
+        btnUploadImage.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
+
+        btnRemoveImage.setOnClickListener(v -> chatViewModel.setSelectedImage(null));
 
         avatarContainer.setOnClickListener(v -> {
             if (isLoggedIn()) {
@@ -106,16 +170,24 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNavigation.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
-            if (itemId == R.id.nav_profile) {
-                if (isLoggedIn()) {
-                    // Handle Navigation to Profile Fragment/Activity
-                    return true;
-                } else {
-                    redirectToLogin();
-                    return false;
-                }
+
+            // Home is the only public screen
+            if (itemId == R.id.nav_home) return true;
+
+            // Check auth for all other screens (Practice, Leaderboard, Profile)
+            if (!isLoggedIn()) {
+                redirectToLogin();
+                return false;
             }
-            // Add other navigation logic as needed
+
+            // Handle navigation for authenticated users
+            if (itemId == R.id.nav_profile) {
+                startActivity(new Intent(this, ProfileActivity.class));
+            } else if (itemId == R.id.nav_practice) {
+                startActivity(new Intent(this, PracticeActivity.class));
+            } else if (itemId == R.id.nav_leaderboard) {
+                Toast.makeText(this, "Opening Leaderboard...", Toast.LENGTH_SHORT).show();
+            }
             return true;
         });
     }
@@ -131,13 +203,40 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    private void handleImageSelection(Uri uri) {
+        try {
+            File file = getFileFromUri(uri);
+            chatViewModel.setSelectedImage(file);
+        } catch (IOException e) {
+            Log.e("IMAGE_PICKER", "Error processing selected image", e);
+            Toast.makeText(this, "Failed to select image", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private File getFileFromUri(Uri uri) throws IOException {
+        InputStream inputStream = getContentResolver().openInputStream(uri);
+        File file = new File(getCacheDir(), "upload_image.jpg");
+        try (FileOutputStream outputStream = new FileOutputStream(file)) {
+            byte[] buffer = new byte[4 * 1024];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+            outputStream.flush();
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+        }
+        return file;
+    }
+
     private void handleSendAction() {
         String question = etQuestionInput.getText().toString().trim();
         if (!question.isEmpty()) {
             AskDTO askDTO = new AskDTO();
             askDTO.setQuestion(question);
 
-            // Get selected subject from ChipGroup
             int checkedChipId = chipGroupSubjects.getCheckedChipId();
             if (checkedChipId != View.NO_ID) {
                 Chip selectedChip = findViewById(checkedChipId);
@@ -146,20 +245,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            callApi(askDTO, new ApiCallback<AnswerDTO>() {
-                @Override
-                public void onSuccess(AnswerDTO result) {
-                    displayAnswer(result);
-                }
+            // Use ViewModel to send question with image
+            chatViewModel.sendQuestion(askDTO, chatViewModel.getSelectedImage().getValue());
 
-                @Override
-                public void onError(Throwable t) {
-                    Log.e("API_ERROR", "Error while calling API", t);
-                    Toast.makeText(MainActivity.this, "Failed to get answer: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-            // For verification: Show a toast and clear input
-            Toast.makeText(this, "Question sent for subject: " + askDTO.getSubject(), Toast.LENGTH_SHORT).show();
             etQuestionInput.setText("");
         } else {
             Toast.makeText(this, "Please enter a question", Toast.LENGTH_SHORT).show();
@@ -210,33 +298,5 @@ public class MainActivity extends AppCompatActivity {
             chip.setClickable(true);
             chipGroupSubjects.addView(chip);
         }
-    }
-
-    private void callApi(AskDTO askDTO, ApiCallback<AnswerDTO> callback) {
-        QuestionAPI questionAPI = retrofitService.getRetrofit().create(QuestionAPI.class);
-        questionAPI.askQuestion(askDTO)
-                .enqueue(new Callback<AnswerDTO>() {
-                    @Override
-                    public void onResponse(Call<AnswerDTO> call, Response<AnswerDTO> response) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            AnswerDTO answerDTO = response.body();
-                            callback.onSuccess(answerDTO);
-                        } else {
-                            Log.e("API_ERROR", "Code: " + response.code());
-                            try {
-                                if (response.errorBody() != null) {
-                                    Log.e("API_ERROR", "Error body: " + response.errorBody().string());
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<AnswerDTO> call, Throwable throwable) {
-                        callback.onError(throwable);
-                    }
-                });
     }
 }

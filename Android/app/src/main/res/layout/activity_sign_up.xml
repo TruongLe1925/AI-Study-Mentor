@@ -72,32 +72,6 @@
             app:layout_constraintTop_toBottomOf="@id/tvCreateAccount" />
 
         <!-- Input Fields -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilFullName"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxStrokeColor="#E2E8F0"
-            app:hintEnabled="false"
-            app:layout_constraintTop_toBottomOf="@id/tvSignUpSubtitle"
-            app:startIconDrawable="@drawable/outline_accessible_forward_24"
-            app:startIconTint="#64748B">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etFullName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Full Name"
-                android:inputType="textPersonName"
-                android:padding="16dp"
-                android:textColor="#1E293B"
-                android:textSize="15sp" />
-        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilEmail"
@@ -111,7 +85,7 @@
             app:boxCornerRadiusTopStart="12dp"
             app:boxStrokeColor="#E2E8F0"
             app:hintEnabled="false"
-            app:layout_constraintTop_toBottomOf="@id/tilFullName"
+            app:layout_constraintTop_toBottomOf="@id/tvSignUpSubtitle"
             app:startIconDrawable="@drawable/baseline_home_24"
             app:startIconTint="#64748B">
 
@@ -121,6 +95,33 @@
                 android:layout_height="wrap_content"
                 android:hint="Email Address"
                 android:inputType="textEmailAddress"
+                android:padding="16dp"
+                android:textColor="#1E293B"
+                android:textSize="15sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilEducationLevel"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeColor="#E2E8F0"
+            app:hintEnabled="false"
+            app:layout_constraintTop_toBottomOf="@id/tilEmail"
+            app:startIconDrawable="@drawable/ic_cap"
+            app:startIconTint="#64748B">
+
+            <AutoCompleteTextView
+                android:id="@+id/actvEducationLevel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Education Level"
+                android:inputType="none"
                 android:padding="16dp"
                 android:textColor="#1E293B"
                 android:textSize="15sp" />
@@ -138,7 +139,7 @@
             app:boxCornerRadiusTopStart="12dp"
             app:boxStrokeColor="#E2E8F0"
             app:hintEnabled="false"
-            app:layout_constraintTop_toBottomOf="@id/tilEmail"
+            app:layout_constraintTop_toBottomOf="@id/tilEducationLevel"
             app:passwordToggleEnabled="true"
             app:passwordToggleTint="#64748B"
             app:startIconDrawable="@drawable/baseline_self_improvement_24"

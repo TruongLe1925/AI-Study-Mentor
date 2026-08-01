@@ -15,6 +15,15 @@
         android:theme="@style/Theme.Aistudymentor"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ui.QuizResultActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.PracticeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.QuizActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.RecentQuestionActivity"
             android:exported="false" />
         <activity

@@ -1,5 +1,6 @@
 package com._anhtai.aistudymentor.utils;
 
+import com._anhtai.aistudymentor.dto.reponse.Token;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -15,17 +16,22 @@ import java.util.Date;
 
 @Component
 public class JWTUtils {
-    private final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
+    private final long EXPIRATION_TIME = 1000L * 60 * 60 * 24 * 7;
     @Value("${SECRET_KEY}")
     private String SECRET_KEY;
     private  SecretKey key;
-    public String generateToken(String username) {
-        return Jwts.builder()
+    public Token generateToken(String username) {
+        Token token = new Token();
+
+        String accessToken = Jwts.builder()
                 .setSubject(username)
                 .signWith(key,SignatureAlgorithm.HS256)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .compact();
+        return token.builder()
+                .accessToken(accessToken)
+                .build();
     }
     public String extractUsername(String token){
         return extractToken(token).getSubject();

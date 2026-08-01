@@ -154,6 +154,36 @@
                         android:textColorHint="#94A3B8"
                         android:textSize="15sp" />
 
+                    <!-- Image Preview Container -->
+                    <FrameLayout
+                        android:id="@+id/layoutImagePreview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/ivSelectedImagePreview"
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:scaleType="centerCrop"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
+                            app:strokeColor="#E2E8F0"
+                            app:strokeWidth="1dp" />
+
+                        <ImageButton
+                            android:id="@+id/btnRemoveImage"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="-8dp"
+                            android:background="@drawable/bg_level_badge"
+                            android:backgroundTint="#EF4444"
+                            android:src="@drawable/outline_ac_unit_24"
+                            app:tint="#FFFFFF" />
+                    </FrameLayout>
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
