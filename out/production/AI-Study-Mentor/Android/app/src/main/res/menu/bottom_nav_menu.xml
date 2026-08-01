@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/baseline_home_24"
+        android:title="Home" />
+    <item
+        android:id="@+id/nav_practice"
+        android:icon="@drawable/baseline_self_improvement_24"
+        android:title="Practice" />
+    <item
+        android:id="@+id/nav_leaderboard"
+        android:icon="@drawable/baseline_align_vertical_bottom_24"
+        android:title="Leaderboard" />
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/outline_accessible_forward_24"
+        android:title="Profile" />
+</menu>

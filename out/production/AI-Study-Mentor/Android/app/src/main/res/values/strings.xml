@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">aistudymentor</string>
+    <string-array name="education_levels">
+        <item>Lớp 1</item>
+        <item>Lớp 2</item>
+        <item>Lớp 3</item>
+        <item>Lớp 4</item>
+        <item>Lớp 5</item>
+        <item>Lớp 6</item>
+        <item>Lớp 7</item>
+        <item>Lớp 8</item>
+        <item>Lớp 9</item>
+        <item>Lớp 10</item>
+        <item>Lớp 11</item>
+        <item>Lớp 12</item>
+        <item>Cao đẳng</item>
+        <item>Đại học</item>
+    </string-array>
+</resources>

@@ -1,0 +1,182 @@
+-- ========================================================
+-- DATABASE SCRIPT: AI STUDY MENTOR (FULL SYSTEM)
+-- DBMS: MySQL / MariaDB
+-- Engine: InnoDB | Charset: utf8mb4
+-- ========================================================
+
+-- Tạo Database (nếu chưa có) và chọn Database
+CREATE DATABASE IF NOT EXISTS `ai_study_mentor` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `ai_study_mentor`;
+
+-- --------------------------------------------------------
+-- 1. BẢNG KHÔNG CÓ KHÓA NGOẠI (Tạo trước)
+-- --------------------------------------------------------
+
+-- Bảng Danh mục Môn học
+CREATE TABLE `tbl_Subjects` (
+    `SubjectID` INT AUTO_INCREMENT PRIMARY KEY,
+    `SubjectName` VARCHAR(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Danh mục Huy hiệu
+CREATE TABLE `tbl_GamificationBadges` (
+    `BadgeID` INT AUTO_INCREMENT PRIMARY KEY,
+    `BadgeName` VARCHAR(100) NOT NULL,
+    `Description` VARCHAR(255) DEFAULT NULL,
+    `RewardType` VARCHAR(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Danh mục Avatar
+CREATE TABLE `tbl_Avatars` (
+    `AvatarID` INT AUTO_INCREMENT PRIMARY KEY,
+    `AvatarName` VARCHAR(100) NOT NULL,
+    `ImageURL` VARCHAR(500) NOT NULL,
+    `RequiredLevel` INT DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Danh mục Theme (Giao diện)
+CREATE TABLE `tbl_Themes` (
+    `ThemeID` INT AUTO_INCREMENT PRIMARY KEY,
+    `ThemeName` VARCHAR(100) NOT NULL,
+    `ColorCode` VARCHAR(20) NOT NULL,
+    `RequiredXP` INT DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+-- 2. BẢNG NGƯỜI DÙNG (tbl_Users)
+-- --------------------------------------------------------
+
+CREATE TABLE `tbl_Users` (
+    `UserID` INT AUTO_INCREMENT PRIMARY KEY,
+    `Email` VARCHAR(150) NOT NULL UNIQUE,
+    `PasswordHash` VARCHAR(255) NOT NULL,
+    `EducationLevel` VARCHAR(50) DEFAULT NULL,
+    `PreferredStyle` VARCHAR(50) DEFAULT NULL,
+    `TotalXP` INT DEFAULT 0,
+    `CurrentLevel` INT DEFAULT 1,
+    `SelectedAvatarID` INT DEFAULT NULL,
+    `SelectedThemeID` INT DEFAULT NULL,
+    `CreatedAt` DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT `FK_Users_Avatars` FOREIGN KEY (`SelectedAvatarID`) REFERENCES `tbl_Avatars` (`AvatarID`) ON DELETE SET NULL,
+    CONSTRAINT `FK_Users_Themes` FOREIGN KEY (`SelectedThemeID`) REFERENCES `tbl_Themes` (`ThemeID`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+-- 3. BẢNG QUAN HỆ & CHỨC NĂNG XÃ HỘI (Liên kết với tbl_Users)
+-- --------------------------------------------------------
+
+-- Bảng Môn học người dùng đăng ký (Quan hệ N-N)
+CREATE TABLE `tbl_UserSubjects` (
+    `UserSubjectID` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserID` INT NOT NULL,
+    `SubjectID` INT NOT NULL,
+
+    CONSTRAINT `FK_UserSubjects_Users` FOREIGN KEY (`UserID`) REFERENCES `tbl_Users` (`UserID`) ON DELETE CASCADE,
+    CONSTRAINT `FK_UserSubjects_Subjects` FOREIGN KEY (`SubjectID`) REFERENCES `tbl_Subjects` (`SubjectID`) ON DELETE CASCADE,
+    CONSTRAINT `UQ_User_Subject` UNIQUE (`UserID`, `SubjectID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Huy hiệu người dùng đã đạt được (Quan hệ N-N)
+CREATE TABLE `tbl_UserBadges` (
+    `UserBadgeID` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserID` INT NOT NULL,
+    `BadgeID` INT NOT NULL,
+    `AwardedAt` DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT `FK_UserBadges_Users` FOREIGN KEY (`UserID`) REFERENCES `tbl_Users` (`UserID`) ON DELETE CASCADE,
+    CONSTRAINT `FK_UserBadges_Badges` FOREIGN KEY (`BadgeID`) REFERENCES `tbl_GamificationBadges` (`BadgeID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Kết bạn (Dùng cho Leaderboard Bạn Bè)
+CREATE TABLE `tbl_Friendships` (
+    `FriendshipID` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserID` INT NOT NULL,
+    `FriendID` INT NOT NULL,
+    `Status` VARCHAR(20) DEFAULT 'Pending', -- 'Pending', 'Accepted', 'Blocked'
+    `CreatedAt` DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT `FK_Friendships_User` FOREIGN KEY (`UserID`) REFERENCES `tbl_Users` (`UserID`) ON DELETE CASCADE,
+    CONSTRAINT `FK_Friendships_Friend` FOREIGN KEY (`FriendID`) REFERENCES `tbl_Users` (`UserID`) ON DELETE CASCADE,
+    CONSTRAINT `UQ_User_Friend` UNIQUE (`UserID`, `FriendID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Thông báo
+CREATE TABLE `tbl_Notifications` (
+    `NotificationID` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserID` INT NOT NULL,
+    `Title` VARCHAR(200) NOT NULL,
+    `Message` TEXT NOT NULL,
+    `IsRead` TINYINT(1) DEFAULT 0, -- 0: Chưa đọc, 1: Đã đọc
+    `CreatedAt` DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT `FK_Notifications_Users` FOREIGN KEY (`UserID`) REFERENCES `tbl_Users` (`UserID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+-- 4. BẢNG HỎI ĐÁP AI & ÔN LUYỆN
+-- --------------------------------------------------------
+
+-- Bảng Câu hỏi của người dùng
+CREATE TABLE `tbl_Questions` (
+    `QuestionID` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserID` INT NOT NULL,
+    `SubjectID` INT NOT NULL,
+    `QuestionText` LONGTEXT NOT NULL,
+    `ImageURL` VARCHAR(500) DEFAULT NULL,
+    `DifficultyLevel` VARCHAR(20) DEFAULT NULL,
+    `IsBookmarked` TINYINT(1) DEFAULT 0,
+    `AskedAt` DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT `FK_Questions_Users` FOREIGN KEY (`UserID`) REFERENCES `tbl_Users` (`UserID`) ON DELETE CASCADE,
+    CONSTRAINT `FK_Questions_Subjects` FOREIGN KEY (`SubjectID`) REFERENCES `tbl_Subjects` (`SubjectID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Phản hồi từ AI (Quan hệ 1-1 với tbl_Questions)
+CREATE TABLE `tbl_AIAnswers` (
+    `AnswerID` INT AUTO_INCREMENT PRIMARY KEY,
+    `QuestionID` INT NOT NULL UNIQUE,
+    `PrimaryAnswer` LONGTEXT NOT NULL,
+    `SimplifiedExplanation` LONGTEXT DEFAULT NULL,
+    `AlternativeApproaches` LONGTEXT DEFAULT NULL,
+    `KeyConceptsSummary` LONGTEXT DEFAULT NULL,
+    `CommonMistakes` LONGTEXT DEFAULT NULL,
+    `SuggestedFollowUps` LONGTEXT DEFAULT NULL,
+    `GeneratedAt` DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT `FK_AIAnswers_Questions` FOREIGN KEY (`QuestionID`) REFERENCES `tbl_Questions` (`QuestionID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Bài tập Ôn luyện (Practice Quizzes)
+CREATE TABLE `tbl_PracticeQuizzes` (
+    `QuizID` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserID` INT NOT NULL,
+    `QuestionType` VARCHAR(50) DEFAULT NULL,
+    `QuizContent` LONGTEXT NOT NULL,
+    `CorrectAnswer` TEXT NOT NULL,
+    `UserAnswer` TEXT DEFAULT NULL,
+    `IsCorrect` TINYINT(1) DEFAULT 0,
+    `AttemptDate` DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT `FK_PracticeQuizzes_Users` FOREIGN KEY (`UserID`) REFERENCES `tbl_Users` (`UserID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng Thống kê Tiến độ Học tập (Dashboard Analytics)
+CREATE TABLE `tbl_UserProgress` (
+    `ProgressID` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserID` INT NOT NULL UNIQUE,
+    `TotalQuestionsAsked` INT DEFAULT 0,
+    `QuizAccuracyRate` FLOAT DEFAULT 0.0,
+    `TimeSpentReviewing` INT DEFAULT 0, -- Tính bằng phút
+
+    CONSTRAINT `FK_UserProgress_Users` FOREIGN KEY (`UserID`) REFERENCES `tbl_Users` (`UserID`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+-- 5. ĐÁNH INDEX TỐI ƯU TỐC ĐỘ TRUY VẤN
+-- --------------------------------------------------------
+
+CREATE INDEX `IX_Questions_UserID` ON `tbl_Questions`(`UserID`);
+CREATE INDEX `IX_PracticeQuizzes_UserID` ON `tbl_PracticeQuizzes`(`UserID`);
+CREATE INDEX `IX_Notifications_UserID_IsRead` ON `tbl_Notifications`(`UserID`, `IsRead`);
+CREATE INDEX `IX_Users_TotalXP` ON `tbl_Users`(`TotalXP` DESC);
