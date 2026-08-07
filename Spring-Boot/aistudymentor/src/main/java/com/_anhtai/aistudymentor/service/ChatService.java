@@ -30,7 +30,8 @@ public class ChatService {
     private final UserDAO userDAO;
     private final QuestionRepository questionRepository;
     private final SubjectRepository subjectRepository;
-    public ChatService(SubjectRepository subjectRepository, QuestionRepository questionRepository, UserDAO userDAO, ChatClient.Builder chatClient, UserDetailsRepository userDetailsRepository) {
+    public ChatService(SubjectRepository subjectRepository, QuestionRepository questionRepository,
+                       UserDAO userDAO, ChatClient.Builder chatClient, UserDetailsRepository userDetailsRepository) {
         this.chatClient = chatClient.build();
         this.userDetailsRepository = userDetailsRepository;
         this.userDAO = userDAO;
@@ -140,7 +141,8 @@ public class ChatService {
             Nhiệm vụ của bạn là tạo ra một đề kiểm tra trắc nghiệm gồm 10 câu hỏi về môn học %s ở lớp %s.
             
             YÊU CẦU ĐỊNH DẠNG VÀ HIỂN THỊ (CỰC KỲ QUAN TRỌNG):
-            1. Trả về ký tự tiếng Việt và ký tự đặc biệt ở dạng văn bản UTF-8 chuẩn (UTF-8 Plain Text), TUYỆT ĐỐI NÓI KHÔNG với việc encode unicode dạng escape sequence (như \\u00b0, \\u221a, \\u00eef...). Viết trực tiếp ký tự như: °, √, α, β...
+            1. Trả về ký tự tiếng Việt và ký tự đặc biệt ở dạng văn bản UTF-8 chuẩn (UTF-8 Plain Text), TUYỆT ĐỐI NÓI KHÔNG với việc encode unicode dạng escape sequence 
+            (như \\u00b0, \\u221a, \\u00eef...). Viết trực tiếp ký tự như: °, √, α, β...
             2. Tất cả công thức toán học, biểu thức, biến số, căn thức, phân số, mũ phải được bọc trong cặp dấu $...$ theo đúng cú pháp LaTeX chuẩn.
                - Ví dụ đúng: "$y = 2x^2 + 1$", "$y = \\sqrt{3}x - 2$", "80^\\circ", "$y = \\frac{3}{x} + 1$"
                - Ví dụ sai: "2x^2 + 1", "\\u221a3x - 2", "80\\u00b0"
