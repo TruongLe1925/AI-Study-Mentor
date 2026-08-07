@@ -38,92 +38,96 @@ public class ChatService {
         this.subjectRepository = subjectRepository;
     }
     @Transactional
-    public AnswerDTO chat(AskDTO askDTO, MultipartFile file,String email) {
-        if(askDTO==null){
-            throw new RuntimeException("Messege not found");
+    public AnswerDTO chat(AskDTO askDTO, MultipartFile file, String email) {
+        if (askDTO == null) {
+            throw new IllegalArgumentException("Message not found / AskDTO cannot be null");
         }
-        String userText = String.format("\"Câu hỏi / Chủ đề cần giải đáp: %s \"" +
-                "về môn học: %s\"", askDTO.getQuestion(), askDTO.getSubject());
-        String systemMessage = """
-            Bạn là "AI Study Mentor" - trợ lý học tập AI thông minh, thân thiện dành cho học sinh, sinh viên (từ cấp 2, cấp 3 đến đại học).
-            
-            Nhiệm vụ của bạn:
-            1. Phân tích câu hỏi của học sinh để xác định môn học và độ khó.
-            2. Cung cấp lời giải thích chính xác, rõ ràng, chi tiết từng bước (step-by-step) bằng ngôn ngữ tiếng Việt dễ hiểu, phù hợp với trình độ học sinh.
-            3. Trình bày rõ ràng các bước logic, công thức và lý thuyết liên quan đối với các bài tập tính toán / giải đề.
-            4. Chỉ ra các lỗi sai thường gặp, các phương pháp giải thay thế và tóm tắt kiến thức trọng tâm.
-            5. Gợi ý thêm các câu hỏi luyện tập / bài tập tương tự để học sinh củng cố kiến thức.
-            6. Kiến thức không liên quan thì cứ trả lời là không hỗ trợ và không đưa ra các thông tin không liên quan.
-            Luôn giữ văn phong khuyến khích, tích cực, mang tính giáo dục cao. Tuyệt đối không trả lời các nội dung không liên quan đến học tập hoặc vi phạm chuẩn mực.
-            """;
-        if (email != null && file != null && !file.isEmpty()) {
-            // 1. Lấy contentType từ file gửi lên
-            String contentType = file.getContentType();
 
-            // 2. Xử lý trường hợp contentType bị null hoặc chứa dấu "*" (ví dụ: "image/*")
-            if (contentType == null || contentType.contains("*")) {
-                // Gán mặc định về image/jpeg hoặc tự dò lại (fallback)
-                contentType = "image/jpeg";
+        String userText = String.format("\"Câu hỏi / Chủ đề cần giải đáp: %s \" về môn học: %s\"",
+                askDTO.getQuestion(), askDTO.getSubject());
+
+        String systemMessage = """
+        Bạn là "AI Study Mentor" - trợ lý học tập AI thông minh, thân thiện dành cho học sinh, sinh viên (từ cấp 2, cấp 3 đến đại học).
+        
+        Nhiệm vụ của bạn:
+        1. Phân tích câu hỏi của học sinh để xác định môn học và độ khó.
+        2. Cung cấp lời giải thích chính xác, rõ ràng, chi tiết từng bước (step-by-step) bằng ngôn ngữ tiếng Việt dễ hiểu, phù hợp với trình độ học sinh.
+        3. Trình bày rõ ràng các bước logic, công thức và lý thuyết liên quan đối với các bài tập tính toán / giải đề.
+        4. Chỉ ra các lỗi sai thường gặp, các phương pháp giải thay thế và tóm tắt kiến thức trọng tâm.
+        5. Gợi ý thêm các câu hỏi luyện tập / bài tập tương tự để học sinh củng cố kiến thức.
+        6. Kiến thức không liên quan thì cứ trả lời là không hỗ trợ và không đưa ra các thông tin không liên quan.
+        Luôn giữ văn phong khuyến khích, tích cực, mang tính giáo dục cao. Tuyệt đối không trả lời các nội dung không liên quan đến học tập hoặc vi phạm chuẩn mực.
+        LƯU Ý: Rất quan trọng! Chuỗi JSON trả về phải hợp lệ theo chuẩn RFC 8259.
+        Nếu trong nội dung có chứa dấu gạch chéo ngược '\\\\', hãy escape nó thành '\\\\\\\\'.
+        Không sử dụng các escape character không hợp lệ như \\\\c, \\\\p, \\\\s.
+        """;
+
+        // 1. Gọi AI để lấy câu trả lời (Xử lý riêng trường hợp có ảnh / không ảnh)
+        AnswerDTO answerDTO;
+
+        if (file != null && !file.isEmpty()) {
+            try {
+                // Xác định MimeType an toàn
+                String contentType = file.getContentType();
+                if (contentType == null || contentType.contains("*")) {
+                    contentType = "image/jpeg";
+                }
+
+                // Fix lỗi chính: Dùng org.springframework.core.io.ByteArrayResource
+                // và MimeTypeUtils.parseMimeType() từ org.springframework.util
+                org.springframework.core.io.Resource resource = new org.springframework.core.io.ByteArrayResource(file.getBytes()) {
+                    @Override
+                    public String getFilename() {
+                        return file.getOriginalFilename();
+                    }
+                };
+
+                Media media = new Media(org.springframework.util.MimeTypeUtils.parseMimeType(contentType), resource);
+
+                answerDTO = chatClient.prompt()
+                        .user(promptUserSpec -> promptUserSpec.text(userText).media(media))
+                        .system(systemMessage)
+                        .call()
+                        .entity(AnswerDTO.class);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Không thể đọc file ảnh gửi lên: " + e.getMessage(), e);
+            }
+        } else {
+            answerDTO = chatClient.prompt()
+                    .user(promptUserSpec -> promptUserSpec.text(userText))
+                    .system(systemMessage)
+                    .call()
+                    .entity(AnswerDTO.class);
+        }
+
+        // 2. Lưu vào Database nếu có email (User đăng nhập)
+        if (email != null && !email.isBlank()) {
+            User user = userDAO.findByEmail(email);
+            Subject subject = subjectRepository.findBySubjectName(askDTO.getSubject());
+
+            // Tránh NPE nếu không tìm thấy Subject
+            if (subject == null) {
+                System.out.println("Cảnh báo: Không tìm thấy môn học: " + askDTO.getSubject());
             }
 
-            // 3. Parse MimeType an toàn
-            Media media = Media.builder()
-                    .mimeType(MimeTypeUtils.parseMimeType(contentType))
-                    .data(file.getResource())
-                    .build();
-            User user = userDAO.findByEmail(email);
-            Subject subject = subjectRepository.findBySubjectName(askDTO.getSubject());
-            System.out.println(subject.getSubjectName());
             Question question = Question.builder()
                     .questionText(askDTO.getQuestion())
                     .askedAt(java.time.LocalDateTime.now())
                     .subject(subject)
+                    .user(user)
                     .build();
-            com._anhtai.aistudymentor.dto.reponse.AnswerDTO answerDTO = chatClient.prompt()
-                    .user(promptUserSpec -> promptUserSpec.text(userText).media(media))
-                    .system(systemMessage)
-                    .call()
-                    .entity(AnswerDTO.class);
-            AIAnswer aiAnswer = AIAnswer.builder()
-                    .primaryAnswer(answerDTO.getMainAnswer())
-                    .simplifiedExplanation(answerDTO.getAdditionalInfo())
-                    .build();
-            question.setAiAnswer(aiAnswer);
-            aiAnswer.setQuestion(question);
-            question.setUser(user);
-            questionRepository.save(question);
-            return answerDTO;
-        }else if(email != null && (file == null || file.isEmpty())){
 
-            User user = userDAO.findByEmail(email);
-            Subject subject = subjectRepository.findBySubjectName(askDTO.getSubject());
-            System.out.println(subject.getSubjectName());
-            Question question = Question.builder()
-                    .questionText(askDTO.getQuestion())
-                    .subject(subject)
-                    .askedAt(java.time.LocalDateTime.now())
-                    .build();
-            com._anhtai.aistudymentor.dto.reponse.AnswerDTO answerDTO = chatClient.prompt()
-                    .user(promptUserSpec -> promptUserSpec.text(userText))
-                    .system(systemMessage)
-                    .call()
-                    .entity(AnswerDTO.class);
             AIAnswer aiAnswer = AIAnswer.builder()
                     .primaryAnswer(answerDTO.getMainAnswer())
                     .simplifiedExplanation(answerDTO.getAdditionalInfo())
+                    .question(question)
                     .build();
+
             question.setAiAnswer(aiAnswer);
-            aiAnswer.setQuestion(question);
-            question.setUser(user);
-            questionRepository.save(question);
-            return answerDTO;
-        }else {
-            return chatClient.prompt()
-                    .user(promptUserSpec -> promptUserSpec.text(userText))
-                    .system(systemMessage)
-                    .call()
-                    .entity(AnswerDTO.class);
+            questionRepository.save(question); // Cascading sẽ tự save AIAnswer nếu cấu hình
         }
+
+        return answerDTO;
     }
     public QuizDTO quizGen(String subject,String email){
         if(subject == null){
@@ -157,6 +161,9 @@ public class ChatService {
             Luôn giữ văn phong khuyến khích, tích cực, mang tính giáo dục cao. 
             Tuyệt đối không trả lời các nội dung không liên quan đến học tập hoặc vi phạm chuẩn mực.
             Đảm bảo output JSON là hợp lệ, chỉ trả về chuỗi JSON thuần (không kèm bất kỳ văn bản giải thích nào khác).
+                LƯU Ý: Rất quan trọng! Chuỗi JSON trả về phải hợp lệ theo chuẩn RFC 8259.
+                    Nếu trong nội dung có chứa dấu gạch chéo ngược '\\\\', hãy escape nó thành '\\\\\\\\'.
+                    Không sử dụng các escape character không hợp lệ như \\\\c, \\\\p, \\\\s.
             """;
 
         return chatClient.prompt()

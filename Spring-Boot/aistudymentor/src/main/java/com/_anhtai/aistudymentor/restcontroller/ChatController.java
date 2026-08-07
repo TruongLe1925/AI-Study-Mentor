@@ -32,6 +32,9 @@ public class ChatController {
             @RequestPart(value = "file", required = false) MultipartFile file,
             Principal principal
     ) {
+        if(principal == null) {
+            return chatService.chat(questionDTO, file, null);
+        }
         return chatService.chat(questionDTO, file,principal.getName());
     }
     @PostMapping("/quiz")
