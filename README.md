@@ -1,14 +1,14 @@
 # AI Study Mentor
 
-Ứng dụng học tập thông minh được hỗ trợ bởi AI, giúp người dùng học tập hiệu quả hơn với các tính năng chat hỏi đáp, ôn luyện, và gamification.
+An intelligent learning app powered by AI, designed to help users study more effectively with Q&A chat, practice exercises, and gamification.
 
-## 📋 Tổng quan dự án
+## 📋 Project Overview
 
-AI Study Mentor là một hệ thống học tập toàn diện bao gồm:
-- **Backend API**: Spring Boot REST API với tích hợp AI (OpenAI)
-- **Mobile App**: Ứng dụng Android cho người dùng cuối
+AI Study Mentor is a complete learning solution consisting of:
+- **Backend API**: Spring Boot REST API with AI integration (OpenAI)
+- **Mobile App**: Android application for end users
 
-## 🏗️ Kiến trúc hệ thống
+## 🏗️ System Architecture
 
 ```
 AI-Study-Mentor/
@@ -19,67 +19,67 @@ AI-Study-Mentor/
 └── figma/                # UI/UX designs
 ```
 
-## 🚀 Công nghệ sử dụng
+## 🚀 Technologies Used
 
 ### Backend (Spring Boot)
 - **Java 17**
 - **Spring Boot 4.1.0**
-- **Spring AI 2.0.0** - Tích hợp OpenAI GPT
-- **Spring Security** - Authentication & Authorization
+- **Spring AI 2.0.0** - OpenAI GPT integration
+- **Spring Security** - Authentication & authorization
 - **Spring Data JPA** - ORM
 - **MySQL** - Database
-- **JWT (jjwt)** - Token authentication
-- **Lombok** - Reduce boilerplate code
+- **JWT (jjwt)** - Token-based authentication
+- **Lombok** - Boilerplate reduction
 - **SpringDoc OpenAPI** - API documentation
 
 ### Mobile (Android)
 - Android SDK
 - Gradle build system
 
-## 📁 Cấu trúc Database
+## 📁 Database Structure
 
-Hệ thống sử dụng MySQL với các bảng chính:
+The system uses MySQL with the main tables:
 
-### Bảng cơ bản
-- `tbl_Users` - Thông tin người dùng
-- `tbl_Subjects` - Danh mục môn học
-- `tbl_GamificationBadges` - Huy hiệu gamification
-- `tbl_Avatars` - Avatar người dùng
-- `tbl_Themes` - Giao diện theme
+### Core Tables
+- `tbl_Users` - User information
+- `tbl_Subjects` - Subject catalogue
+- `tbl_GamificationBadges` - Gamification badges
+- `tbl_Avatars` - User avatars
+- `tbl_Themes` - UI themes
 
-### Bảng chức năng
-- `tbl_UserSubjects` - Môn học người dùng đăng ký
-- `tbl_UserBadges` - Huy hiệu người dùng đạt được
-- `tbl_Friendships` - Quan hệ bạn bè
-- `tbl_Notifications` - Thông báo hệ thống
-- `tbl_Questions` - Câu hỏi người dùng
-- `tbl_AIAnswers` - Câu trả lời từ AI
-- `tbl_PracticeQuizzes` - Bài tập ôn luyện
-- `tbl_UserProgress` - Thống kê tiến độ học tập
+### Functional Tables
+- `tbl_UserSubjects` - Subjects enrolled by users
+- `tbl_UserBadges` - Badges earned by users
+- `tbl_Friendships` - Friend relationships
+- `tbl_Notifications` - System notifications
+- `tbl_Questions` - User questions
+- `tbl_AIAnswers` - AI answers
+- `tbl_PracticeQuizzes` - Practice quizzes
+- `tbl_UserProgress` - Learning progress records
 
-## 🔧 Cài đặt và chạy
+## 🔧 Setup and Run
 
-### Yêu cầu hệ thống
+### System Requirements
 - Java 17+
 - Maven 3.6+
 - MySQL 8.0+
-- Android Studio (cho mobile app)
+- Android Studio (for mobile app)
 
-### Cài đặt Backend
+### Backend Setup
 
-1. **Clone repository**
+1. **Clone the repository**
 ```bash
 git clone https://github.com/TruongLe1925/AI-Study-Mentor.git
 cd AI-Study-Mentor/Spring-Boot/aistudymentor
 ```
 
-2. **Cấu hình Database**
+2. **Configure the database**
 ```bash
-# Tạo database từ script
+# Create the database from the script
 mysql -u root -p < SQLScript.txt
 ```
 
-3. **Cấu hình application.properties**
+3. **Update application.properties**
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/ai_study_mentor
 spring.datasource.username=your_username
@@ -89,97 +89,97 @@ spring.ai.openai.api-key=your_openai_api_key
 spring.ai.openai.chat.options.model=gpt-4
 ```
 
-4. **Chạy ứng dụng**
+4. **Run the application**
 ```bash
 mvn spring-boot:run
 ```
 
-Backend sẽ chạy tại `http://localhost:8080`
+The backend will be available at `http://localhost:8080`
 
-API Documentation: `http://localhost:8080/swagger-ui.html`
+API documentation: `http://localhost:8080/swagger-ui.html`
 
-### Cài đặt Mobile App
+### Mobile App Setup
 
-1. **Mở project với Android Studio**
+1. **Open the project in Android Studio**
 ```bash
 cd AI-Study-Mentor/Android
 ```
 
-2. **Mở file trong Android Studio**
-- File → Open → Chọn thư mục Android
+2. **Import the Android project**
+- File → Open → Select the `Android` folder
 
-3. **Cấu hình API endpoint**
-- Update API base URL trong code Android để trỏ đến backend
+3. **Configure the API endpoint**
+- Update the Android code to point the app to the backend base URL
 
-4. **Build và chạy**
-- Chọn device/emulator
-- Click Run button
+4. **Build and run**
+- Select a device/emulator
+- Click Run
 
-## 🎯 Tính năng chính
+## 🎯 Main Features
 
 ### 🤖 AI Chat Assistant
-- Hỏi đáp về các môn học
-- Giải thích chi tiết và đơn giản hóa
-- Gợi ý phương pháp giải pháp thay thế
-- Tóm tắt các khái niệm chính
-- Cảnh báo lỗi thường gặp
+- Ask questions about subjects
+- Receive detailed explanations and simplifications
+- Get alternative solution suggestions
+- Summarize key concepts
+- Detect common mistakes
 
 ### 📝 Practice Quizzes
-- Tạo bài tập ôn luyện tự động
-- Đánh giá câu trả lời
-- Theo dõi độ chính xác
+- Generate practice quizzes automatically
+- Evaluate answers
+- Track accuracy
 
 ### 🏆 Gamification
-- Hệ thống XP và Level
-- Unlock avatar theo level
-- Thu th huy hiệu (badges)
-- Theme tùy chỉnh
+- XP and level system
+- Unlock avatars by level
+- Earn gamification badges
+- Customize themes
 
 ### 👥 Social Features
-- Kết bạn với người dùng khác
-- Leaderboard bạn bè
-- Chia sẻ tiến độ
+- Connect with other users
+- Friend leaderboard
+- Share progress
 
 ### 📊 Analytics Dashboard
-- Thống kê số câu hỏi đã hỏi
-- Độ chính xác quiz
-- Thời gian ôn tập
-- Theo dõi tiến độ học tập
+- Track number of questions asked
+- Monitor quiz accuracy
+- Review study time
+- Track learning progress
 
 ## 🔐 Authentication
 
-Hệ thống sử dụng JWT (JSON Web Token) cho authentication:
-- Đăng ký tài khoản mới
-- Đăng nhập với email/password
-- JWT token cho các API request
+The system uses JWT (JSON Web Token) for authentication:
+- Register a new account
+- Login with email/password
+- Use JWT for protected API requests
 
 ## 📝 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Đăng ký
-- `POST /api/auth/login` - Đăng nhập
+- `POST /api/auth/register` - Register
+- `POST /api/auth/login` - Login
 
 ### Chat AI
-- `POST /api/chat/ask` - Hỏi câu hỏi cho AI
-- `POST /api/chat/quiz` - Tạo quiz
+- `POST /api/chat/ask` - Ask AI a question
+- `POST /api/chat/quiz` - Create a quiz
 
 ### Subjects
-- `GET /api/subjects` - Lấy danh sách môn học
-- `POST /api/subjects/{id}/enroll` - Đăng ký môn học
+- `GET /api/subjects` - Get subject list
+- `POST /api/subjects/{id}/enroll` - Enroll in a subject
 
 ### User Progress
-- `GET /api/progress` - Lấy tiến độ học tập
+- `GET /api/progress` - Get learning progress
 
-Xem đầy đủ API documentation tại `/swagger-ui.html`
+See the full API documentation at `/swagger-ui.html`
 
-## 🤝 Đóng góp
+## 🤝 Contribution
 
 Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
 2. Create a feature branch
 3. Commit your changes
-4. Push to the branch
+4. Push your branch
 5. Create a Pull Request
 
 ## 📄 License
@@ -190,9 +190,9 @@ This project is licensed under the MIT License.
 
 **TruongLe1925**
 
-## 📞 Liên hệ
+## 📞 Contact
 
-Nếu có câu hỏi hoặc góp ý, vui lòng tạo issue trên repository.
+If you have questions or feedback, please open an issue on the repository.
 
 ---
 
